@@ -32,7 +32,7 @@ const fadeUp = {
 const Index = () => {
   return (
     <Layout>
-      <section className="hero relative min-h-screen flex items-center justify-center overflow-hidden">
+      <section className="hero relative min-h-[100svh] flex items-center justify-center overflow-hidden">
         <div className="relative z-10 text-center px-6 max-w-4xl mx-auto">
           <motion.span
             initial={{ opacity: 0 }}

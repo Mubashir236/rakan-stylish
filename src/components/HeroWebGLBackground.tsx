@@ -67,6 +67,58 @@ export interface HeroWebGLBackgroundProps {
   fixed?: boolean;
 }
 
+function MobileParallaxBackground({
+  imageUrl,
+  className = "",
+  fixed = false,
+}: {
+  imageUrl: string;
+  className?: string;
+  fixed?: boolean;
+}) {
+  const bgRef = useRef<HTMLDivElement>(null);
+  const rafId = useRef(0);
+  const currentY = useRef(0);
+
+  useEffect(() => {
+    const el = bgRef.current;
+    if (!el || !fixed) return;
+
+    const PARALLAX_FACTOR = 0.3;
+    let targetY = 0;
+
+    const tick = () => {
+      targetY = window.scrollY * PARALLAX_FACTOR;
+      currentY.current += (targetY - currentY.current) * 0.12;
+      el.style.transform = `translate3d(0, ${-currentY.current}px, 0)`;
+      rafId.current = requestAnimationFrame(tick);
+    };
+    rafId.current = requestAnimationFrame(tick);
+
+    return () => cancelAnimationFrame(rafId.current);
+  }, [fixed]);
+
+  return (
+    <div
+      ref={bgRef}
+      className={className}
+      style={{
+        position: fixed ? "fixed" : "absolute",
+        inset: 0,
+        zIndex: 0,
+        height: fixed ? "120svh" : "100%",
+        overflow: "hidden",
+        willChange: "transform",
+        backgroundImage: `url(${imageUrl})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+      }}
+      aria-hidden
+    />
+  );
+}
+
 export default function HeroWebGLBackground({
   imageUrl,
   className = "",
@@ -74,11 +126,13 @@ export default function HeroWebGLBackground({
   fixed = false,
 }: HeroWebGLBackgroundProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [webglReady, setWebglReady] = useState(false); // true only when WebGL is running with texture loaded
+  const [webglReady, setWebglReady] = useState(false);
   const mouseTarget = useRef({ x: 0.5, y: 0.5 });
   const mouseCurrent = useRef({ x: 0.5, y: 0.5 });
 
   useEffect(() => {
+    if (isMobile) return;
+
     const container = containerRef.current;
     if (!container) return;
 
@@ -115,7 +169,6 @@ export default function HeroWebGLBackground({
         const img = tex.image as HTMLImageElement;
         if (img && img.naturalWidth) {
           const imageAspect = img.naturalWidth / img.naturalHeight;
-          const strength = isMobile ? 0.5 : 2.5;
           const material = new THREE.ShaderMaterial({
             uniforms: {
               uTexture: { value: texture },
@@ -124,7 +177,7 @@ export default function HeroWebGLBackground({
               uViewSize: { value: new THREE.Vector2(width, height) },
               uImageAspect: { value: imageAspect },
               uViewAspect: { value: viewAspect },
-              uStrength: { value: strength },
+              uStrength: { value: 2.5 },
               uMouseInfluence: { value: 0.03 },
             },
             vertexShader: VERTEX_SHADER,
@@ -199,12 +252,14 @@ export default function HeroWebGLBackground({
     };
   }, [imageUrl, isMobile, fixed]);
 
-  // Show static image until WebGL has loaded the texture and is drawing (or if WebGL failed)
+  if (isMobile) {
+    return <MobileParallaxBackground imageUrl={imageUrl} className={className} fixed={fixed} />;
+  }
+
   const showFallback = !webglReady;
 
   return (
     <>
-      {/* WebGL canvas container: behind overlay and text, same layer as fallback */}
       <div
         ref={containerRef}
         className={className}
@@ -216,7 +271,6 @@ export default function HeroWebGLBackground({
         }}
         aria-hidden
       />
-      {/* Static fallback: visible until WebGL texture is ready or when WebGL isn't used */}
       {showFallback && (
         <div
           className={className}
