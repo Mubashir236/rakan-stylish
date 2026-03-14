@@ -1,43 +1,21 @@
 /**
- * Phase 1: Grid Collection (Overview) — Becane-style spotlight.
- * 15 models in flex-row; grayscale by default; circular spotlight reveals full color on mousemove.
- * Small circle, smooth transition between black/grayscale and color.
+ * Lookbook collection grid — horizontal strip of looks.
+ * Desktop: ~5 images visible, scroll horizontally to view more.
+ * Mobile: 1 image per viewport width with horizontal swipe.
  */
-import { useRef, useState, useCallback, useEffect } from "react";
+import { useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Lenis from "lenis";
 import { LOOK_IMAGES, NUM_LOOKS } from "@/data/looks";
 
 const BG = "#F5F5F5";
-const SPOTLIGHT_RADIUS = 90;
 
-const SPOT_EASING = "cubic-bezier(0.33, 0, 0.2, 1)";
-const SPOT_DURATION = "0.25s";
+// Duplicate local images up to 10 entries for the grid
+const GRID_IMAGES = Array.from({ length: 10 }, (_, i) => LOOK_IMAGES[i % LOOK_IMAGES.length]);
 
 export default function CollectionGrid() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [spot, setSpot] = useState<{ cardIndex: number; x: number; y: number } | null>(null);
-  const rafPending = useRef(false);
-  const nextSpot = useRef<{ cardIndex: number; x: number; y: number } | null>(null);
-
-  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLElement>, cardIndex: number) => {
-    const target = e.currentTarget;
-    const rect = target.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    nextSpot.current = { cardIndex, x, y };
-    if (rafPending.current) return;
-    rafPending.current = true;
-    requestAnimationFrame(() => {
-      rafPending.current = false;
-      if (nextSpot.current) setSpot(nextSpot.current);
-    });
-  }, []);
-
-  const handleMouseLeave = useCallback(() => {
-    nextSpot.current = null;
-    requestAnimationFrame(() => setSpot(null));
-  }, []);
+  const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
 
   useEffect(() => {
     const lenis = new Lenis({
@@ -51,6 +29,15 @@ export default function CollectionGrid() {
       rafId = requestAnimationFrame(raf);
     };
     rafId = requestAnimationFrame(raf);
+
+    // Center the first card horizontally when the grid mounts
+    if (cardsRef.current[0]) {
+      cardsRef.current[0].scrollIntoView({
+        behavior: "auto",
+        block: "nearest",
+        inline: "center",
+      });
+    }
     return () => {
       cancelAnimationFrame(rafId);
       lenis.destroy();
@@ -61,59 +48,32 @@ export default function CollectionGrid() {
     <div
       ref={containerRef}
       className="min-h-screen w-full overflow-x-auto overflow-y-auto"
-      style={{ background: BG }}
+      style={{ background: BG, scrollSnapType: "x mandatory" }}
     >
-      {/* BECANE-style: row centered vertically with space above/below; models ~65vh, feet aligned */}
+      {/* Row centered vertically with space above/below; models ~65vh, feet aligned */}
       <div className="min-h-screen flex flex-col items-center justify-center py-12 md:py-16">
         <div
-          className="flex flex-row items-end gap-8 md:gap-12 px-6 md:px-10"
+          className="flex flex-row items-end gap-6 md:gap-8 px-6 md:px-10"
           style={{ width: "max-content" }}
         >
-          {LOOK_IMAGES.map((src, i) => (
-            <Link
+          {GRID_IMAGES.map((src, i) => (
+            <div
               key={i}
-              to={`/look/${String(i + 1).padStart(2, "0")}`}
-              className="look-card group relative shrink-0 overflow-visible flex flex-col items-center justify-end"
-              style={{ width: "min(28vw, 260px)", height: "65vh" }}
-              onMouseMove={(e) => handleMouseMove(e, i)}
-              onMouseLeave={handleMouseLeave}
+              ref={(el) => {
+                cardsRef.current[i] = el;
+              }}
+              className="look-card group relative shrink-0 overflow-visible flex flex-col items-center justify-end w-[80vw] sm:w-[55vw] md:w-[22vw] lg:w-[18vw] xl:w-[16vw]"
+              style={{ height: "65vh", scrollSnapAlign: "center" }}
             >
-              {/* Card inner: full height for spotlight math */}
+              {/* Card inner */}
               <div className="relative w-full h-full overflow-hidden rounded-sm">
-                {/* Base: grayscale / darkened */}
-                <div
-                  className="absolute inset-0 bg-neutral-800"
-                  aria-hidden
-                >
-                  <img
-                    src={src}
-                    alt=""
-                    className="w-full h-full object-cover object-bottom opacity-80"
-                    style={{ filter: "grayscale(100%) brightness(0.55)" }}
-                    loading="lazy"
-                    decoding="async"
-                  />
-                </div>
-                {/* Spotlight layer: full color, clipped by circle */}
-                <div
-                  className="absolute inset-0 pointer-events-none"
-                  style={{
-                    clipPath:
-                      spot?.cardIndex === i
-                        ? `circle(${SPOTLIGHT_RADIUS}px at ${spot.x}px ${spot.y}px)`
-                        : "circle(0px at -999px -999px)",
-                    transition: `clip-path ${SPOT_DURATION} ${SPOT_EASING}`,
-                    willChange: "clip-path",
-                  }}
-                  aria-hidden
-                >
-                  <img
-                    src={src}
-                    alt=""
-                    className="w-full h-full object-cover object-bottom"
-                    style={{ filter: "brightness(1.05)" }}
-                  />
-                </div>
+                <img
+                  src={src}
+                  alt=""
+                  className="w-full h-full object-cover object-bottom transition-transform duration-500 group-hover:scale-[1.03]"
+                  loading="lazy"
+                  decoding="async"
+                />
               </div>
               {/* Label below figure */}
               <span
@@ -125,7 +85,7 @@ export default function CollectionGrid() {
               >
                 Look {String(i + 1).padStart(2, "0")}
               </span>
-            </Link>
+            </div>
           ))}
         </div>
       </div>

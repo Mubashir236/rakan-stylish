@@ -9,7 +9,6 @@ import Education from "./pages/Education";
 import Membership from "./pages/Membership";
 import Booking from "./pages/Booking";
 import CollectionGrid from "./pages/CollectionGrid";
-import LookPage from "./pages/LookPage";
 import NotFound from "./pages/NotFound";
 import AdminPortal from "./pages/AdminPortal";
 
@@ -25,8 +24,6 @@ const App = () => (
           <Route path="/education" element={<Education />} />
           <Route path="/membership" element={<Membership />} />
           <Route path="/booking" element={<Booking />} />
-          <Route path="/lookbook" element={<CollectionGrid />} />
-          <Route path="/look/:id" element={<LookPage />} />
           <Route path="/admin" element={<AdminPortal />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

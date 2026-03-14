@@ -24,4 +24,14 @@ export default defineSchema({
     email: v.string(),
     passwordHash: v.string(),
   }),
+  messages: defineTable({
+    author: v.string(),
+    body: v.string(),
+    createdAt: v.number(),
+  }).index("by_createdAt", ["createdAt"]),
+  chatStatus: defineTable({
+    key: v.string(),
+    isTyping: v.boolean(),
+    updatedAt: v.number(),
+  }).index("by_key", ["key"]),
 });
