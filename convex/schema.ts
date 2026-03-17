@@ -25,10 +25,15 @@ export default defineSchema({
     passwordHash: v.string(),
   }),
   messages: defineTable({
-    sessionId: v.string(),
-    role: v.string(),
-    content: v.string(),
-    timestamp: v.number(),
+    // New fields
+    content: v.optional(v.string()),
+    role: v.optional(v.string()),
+    sessionId: v.optional(v.string()),
+    timestamp: v.optional(v.float64()),
+    // Old fields (kept for backwards compatibility)
+    author: v.optional(v.string()),
+    body: v.optional(v.string()),
+    createdAt: v.optional(v.float64()),
   }).index("by_session_timestamp", ["sessionId", "timestamp"]),
   chatSessions: defineTable({
     visitorName: v.string(),
