@@ -10,9 +10,9 @@
 
 import type * as admin from "../admin.js";
 import type * as bookings from "../bookings.js";
-import type * as chat from "../chat.js";
+import type * as chatSessions from "../chatSessions.js";
 import type * as memberships from "../memberships.js";
-import type * as openai from "../openai.js";
+import type * as messages from "../messages.js";
 
 import type {
   ApiFromModules,
@@ -23,9 +23,9 @@ import type {
 declare const fullApi: ApiFromModules<{
   admin: typeof admin;
   bookings: typeof bookings;
-  chat: typeof chat;
+  chatSessions: typeof chatSessions;
   memberships: typeof memberships;
-  openai: typeof openai;
+  messages: typeof messages;
 }>;
 
 /**

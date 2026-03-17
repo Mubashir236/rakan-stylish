@@ -25,13 +25,23 @@ export default defineSchema({
     passwordHash: v.string(),
   }),
   messages: defineTable({
-    author: v.string(),
-    body: v.string(),
-    createdAt: v.number(),
-  }).index("by_createdAt", ["createdAt"]),
-  chatStatus: defineTable({
-    key: v.string(),
-    isTyping: v.boolean(),
-    updatedAt: v.number(),
-  }).index("by_key", ["key"]),
+    sessionId: v.string(),
+    role: v.string(),
+    content: v.string(),
+    timestamp: v.number(),
+  }).index("by_session_timestamp", ["sessionId", "timestamp"]),
+  chatSessions: defineTable({
+    visitorName: v.string(),
+    visitorEmail: v.string(),
+    messages: v.array(
+      v.object({
+        role: v.string(),
+        content: v.string(),
+        timestamp: v.number(),
+      })
+    ),
+    startedAt: v.number(),
+    lastMessageAt: v.number(),
+    messageCount: v.number(),
+  }),
 });

@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import HeroWebGLBackground from "./HeroWebGLBackground";
-import ChatBox from "./ChatBox";
+import Chatbot from "./Chatbot";
 import { useIsMobile } from "@/hooks/use-mobile";
 import heroBgMain from "@/assets/heroBG-1.jpg";
 
@@ -23,7 +23,7 @@ const Layout = ({ children }: { children: ReactNode }) => {
       <Navbar />
       <main className="flex-1 relative z-10">{children}</main>
       <Footer />
-      <ChatBox />
+      <Chatbot />
     </div>
   );
 };
