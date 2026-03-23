@@ -11,6 +11,7 @@ LOCALHOST TESTING CHECKLIST:
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { MessageCircle, Send, X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAction, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
@@ -21,8 +22,11 @@ type ChatMessage = {
   timestamp: number;
 };
 
-const WELCOME_TEXT =
-  "Welcome to Rakan 👋 I'm your personal fashion assistant. How can I help you today?";
+function getFirstName(fullName: string) {
+  const cleaned = fullName.trim().replace(/\s+/g, " ");
+  if (!cleaned) return "";
+  return cleaned.split(" ")[0];
+}
 
 export default function Chatbot() {
   const [isOpen, setIsOpen] = useState(false);
@@ -33,7 +37,10 @@ export default function Chatbot() {
   const [visitorName, setVisitorName] = useState("");
   const [visitorEmail, setVisitorEmail] = useState("");
   const [isStartingChat, setIsStartingChat] = useState(false);
+  const [hasUserInteracted, setHasUserInteracted] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
+  const inactivityTimeoutRef = useRef<number | null>(null);
+  const autoCloseTimeoutRef = useRef<number | null>(null);
 
   const createSession = useMutation(api.chatSessions.createSession);
   const addMessage = useMutation(api.chatSessions.addMessage);
@@ -44,6 +51,47 @@ export default function Chatbot() {
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [displayMessages, isTyping, isOpen]);
+
+  const clearInactivityTimers = () => {
+    if (inactivityTimeoutRef.current) {
+      window.clearTimeout(inactivityTimeoutRef.current);
+      inactivityTimeoutRef.current = null;
+    }
+    if (autoCloseTimeoutRef.current) {
+      window.clearTimeout(autoCloseTimeoutRef.current);
+      autoCloseTimeoutRef.current = null;
+    }
+  };
+
+  const scheduleInactivityClose = () => {
+    clearInactivityTimers();
+    inactivityTimeoutRef.current = window.setTimeout(async () => {
+      if (!sessionId) return;
+      const awayMessage =
+        "It seems you've stepped away. Feel free to return anytime — Rakan Assistant is always here for you. 👋";
+
+      await addMessage({
+        sessionId,
+        role: "assistant",
+        content: awayMessage,
+      });
+      setChatMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: awayMessage, timestamp: Date.now() },
+      ]);
+
+      autoCloseTimeoutRef.current = window.setTimeout(() => {
+        setIsOpen(false);
+      }, 5000);
+    }, 60000);
+  };
+
+  useEffect(() => {
+    if (!isOpen) {
+      clearInactivityTimers();
+    }
+    return () => clearInactivityTimers();
+  }, [isOpen]);
 
   const handleStartChat = async (e: FormEvent) => {
     e.preventDefault();
@@ -58,17 +106,14 @@ export default function Chatbot() {
         visitorEmail: email,
       });
       setSessionId(newSessionId);
-      setChatMessages([
-        {
-          role: "assistant",
-          content: WELCOME_TEXT,
-          timestamp: Date.now(),
-        },
-      ]);
+      const firstName = getFirstName(name);
+      const welcome =
+        `Welcome, ${firstName} 👋 I'm your personal Rakan fashion assistant.\nHow can I help you today?`;
+      setChatMessages([{ role: "assistant", content: welcome, timestamp: Date.now() }]);
       await addMessage({
         sessionId: newSessionId,
         role: "assistant",
-        content: WELCOME_TEXT,
+        content: welcome,
       });
     } finally {
       setIsStartingChat(false);
@@ -94,6 +139,8 @@ export default function Chatbot() {
       ...prev,
       { role: "user", content: text, timestamp: now },
     ]);
+    setHasUserInteracted(true);
+    clearInactivityTimers();
 
     setIsTyping(true);
     try {
@@ -120,6 +167,7 @@ export default function Chatbot() {
         ...prev,
         { role: "assistant", content: aiText, timestamp: Date.now() },
       ]);
+      scheduleInactivityClose();
     } catch (error) {
       console.error("Convex AI action error:", error);
       const fallbackMessage =
@@ -133,6 +181,7 @@ export default function Chatbot() {
         ...prev,
         { role: "assistant", content: fallbackMessage, timestamp: Date.now() },
       ]);
+      scheduleInactivityClose();
     } finally {
       setIsTyping(false);
     }
@@ -140,135 +189,199 @@ export default function Chatbot() {
 
   return (
     <div className="fixed bottom-5 right-5 z-[70]">
+      <style>{CHATBOT_CSS}</style>
       {!isOpen ? (
         <button
           aria-label="Open Rakan Assistant"
-          onClick={() => setIsOpen(true)}
-          className="h-14 w-14 rounded-full bg-[#111111] border border-[#2b2b2b] text-[#f5d48b] shadow-2xl flex items-center justify-center hover:scale-[1.03] transition-transform"
+          onClick={() => {
+            clearInactivityTimers();
+            setIsOpen(true);
+          }}
+          className="relative h-14 w-14 rounded-full bg-[#111111] border border-[#2b2b2b] text-[#f5d48b] shadow-2xl flex items-center justify-center hover:scale-[1.03] transition-transform"
         >
+          <span className="absolute inset-0 rounded-full ring-pulse-gold" aria-hidden />
           <MessageCircle size={22} />
         </button>
       ) : (
-        <div className="w-[380px] max-w-[92vw] h-[520px] max-h-[82vh] bg-[#0f0f0f] border border-[#2a2a2a] shadow-2xl flex flex-col overflow-hidden rounded-sm">
-          <div className="px-4 py-3 border-b border-[#232323] flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="inline-block h-2 w-2 rounded-full bg-emerald-400" />
-              <h3 className="text-sm tracking-[0.18em] uppercase text-[#f5d48b]">
-                Rakan Assistant
-              </h3>
-            </div>
-            <button
-              onClick={() => setIsOpen(false)}
-              aria-label="Close chatbot"
-              className="text-zinc-400 hover:text-white transition-colors"
-            >
-              <X size={18} />
-            </button>
-          </div>
-
-          {!sessionId ? (
-            <form onSubmit={handleStartChat} className="flex-1 p-4 bg-[#121212] flex flex-col justify-center">
-              <h4 className="text-[#f5d48b] text-lg mb-1">Before we begin...</h4>
-              <p className="text-zinc-400 text-sm mb-5">
-                Share your details so we can save your conversation.
-              </p>
-              <div className="space-y-3">
-                <input
-                  type="text"
-                  required
-                  value={visitorName}
-                  onChange={(e) => setVisitorName(e.target.value)}
-                  placeholder="Full Name"
-                  className="w-full bg-[#171717] border border-[#2e2e2e] text-zinc-100 placeholder:text-zinc-500 px-3 py-2 text-sm outline-none focus:border-[#d5b16b]"
-                />
-                <input
-                  type="email"
-                  required
-                  value={visitorEmail}
-                  onChange={(e) => setVisitorEmail(e.target.value)}
-                  placeholder="Email Address"
-                  className="w-full bg-[#171717] border border-[#2e2e2e] text-zinc-100 placeholder:text-zinc-500 px-3 py-2 text-sm outline-none focus:border-[#d5b16b]"
-                />
-                <button
-                  type="submit"
-                  disabled={isStartingChat || !visitorName.trim() || !visitorEmail.trim()}
-                  className="w-full py-2.5 bg-[#d5b16b] text-black text-sm font-medium disabled:opacity-40 transition-opacity"
-                >
-                  {isStartingChat ? "Starting..." : "Start Chatting \u2192"}
-                </button>
+        <AnimatePresence>
+          <motion.div
+            key="chat-window"
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 24 }}
+            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+            className="w-[420px] max-w-[94vw] h-[580px] max-h-[82vh] bg-[#0f0f0f] border border-[#2a2a2a] shadow-2xl flex flex-col overflow-hidden rounded-md"
+          >
+            <div className="px-4 py-3 border-b border-[#232323] flex items-center justify-between bg-gradient-to-b from-[#141414] to-[#0f0f0f]">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="relative inline-flex h-2.5 w-2.5">
+                    <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-70 animate-ping" />
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400" />
+                  </span>
+                  <span className="text-[11px] tracking-[0.2em] uppercase text-zinc-300">
+                    Online
+                  </span>
+                </div>
+                <h3 className="text-sm tracking-[0.18em] uppercase text-[#f5d48b]">
+                  Rakan Assistant
+                </h3>
               </div>
-            </form>
-          ) : (
-            <>
-              <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#121212]">
-                {displayMessages.map((m, idx) => {
-                  const isUser = m.role === "user";
-                  return (
-                    <div
-                      key={`${m.timestamp}-${idx}`}
-                      className={`flex ${isUser ? "justify-end" : "justify-start"}`}
-                    >
-                      <div
-                        className={`max-w-[85%] px-3 py-2 text-sm leading-relaxed border ${
-                          isUser
-                            ? "bg-[#d5b16b] text-black border-[#d5b16b]"
-                            : "bg-[#1a1a1a] text-zinc-100 border-[#2c2c2c]"
-                        }`}
+              <button
+                onClick={() => {
+                  clearInactivityTimers();
+                  setIsOpen(false);
+                }}
+                aria-label="Close chatbot"
+                className="text-zinc-400 hover:text-white transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {!sessionId ? (
+              <form onSubmit={handleStartChat} className="flex-1 p-5 bg-[#121212] flex flex-col justify-center">
+                <h4 className="text-[#f5d48b] text-lg mb-1">Before we begin...</h4>
+                <p className="text-zinc-400 text-sm mb-5">
+                  Share your details so we can save your conversation.
+                </p>
+                <div className="space-y-3">
+                  <input
+                    type="text"
+                    required
+                    value={visitorName}
+                    onChange={(e) => setVisitorName(e.target.value)}
+                    placeholder="Full Name"
+                    className="w-full bg-[#171717] border border-[#2e2e2e] text-zinc-100 placeholder:text-zinc-500 px-4 py-3 text-sm outline-none focus:border-[#d5b16b] focus:ring-2 focus:ring-[#d5b16b]/20 transition-colors rounded-full"
+                  />
+                  <input
+                    type="email"
+                    required
+                    value={visitorEmail}
+                    onChange={(e) => setVisitorEmail(e.target.value)}
+                    placeholder="Email Address"
+                    className="w-full bg-[#171717] border border-[#2e2e2e] text-zinc-100 placeholder:text-zinc-500 px-4 py-3 text-sm outline-none focus:border-[#d5b16b] focus:ring-2 focus:ring-[#d5b16b]/20 transition-colors rounded-full"
+                  />
+                  <button
+                    type="submit"
+                    disabled={isStartingChat || !visitorName.trim() || !visitorEmail.trim()}
+                    className="w-full py-3 bg-[#d5b16b] text-black text-sm font-medium disabled:opacity-40 transition-opacity rounded-full"
+                  >
+                    {isStartingChat ? "Starting..." : "Start Chatting \u2192"}
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <>
+                <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#121212]">
+                  {displayMessages.map((m, idx) => {
+                    const isUser = m.role === "user";
+                    const t = new Date(m.timestamp);
+                    const timeLabel = t.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+                    return (
+                      <motion.div
+                        key={`${m.timestamp}-${idx}`}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                        className={`flex ${isUser ? "justify-end" : "justify-start"}`}
                       >
-                        {!isUser && (
-                          <div className="text-[10px] uppercase tracking-[0.16em] text-[#f5d48b] mb-1">
+                        <div
+                          className={`max-w-[85%] px-3.5 py-2.5 text-sm leading-relaxed border ${
+                            isUser
+                              ? "bg-[#d5b16b] text-black border-[#d5b16b] rounded-2xl rounded-br-md"
+                              : "bg-[#171717] text-zinc-100 border-[#2c2c2c] rounded-2xl rounded-bl-md"
+                          }`}
+                        >
+                          {!isUser && (
+                            <div className="flex items-center gap-2 mb-1.5">
+                              <div className="h-6 w-6 rounded-full bg-[#0f0f0f] border border-[#2c2c2c] flex items-center justify-center text-[#f5d48b] text-[10px] tracking-[0.2em]">
+                                R
+                              </div>
+                              <div className="text-[10px] uppercase tracking-[0.16em] text-[#f5d48b]">
+                                Rakan
+                              </div>
+                            </div>
+                          )}
+                          <p className="whitespace-pre-wrap">{m.content}</p>
+                          <div className={`mt-2 text-[10px] ${isUser ? "text-black/70" : "text-zinc-400"} text-right`}>
+                            {timeLabel}
+                          </div>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+
+                  {isTyping && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="flex justify-start"
+                    >
+                      <div className="max-w-[85%] px-3.5 py-2.5 text-sm border bg-[#171717] text-zinc-100 border-[#2c2c2c] rounded-2xl rounded-bl-md">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <div className="h-6 w-6 rounded-full bg-[#0f0f0f] border border-[#2c2c2c] flex items-center justify-center text-[#f5d48b] text-[10px] tracking-[0.2em]">
+                            R
+                          </div>
+                          <div className="text-[10px] uppercase tracking-[0.16em] text-[#f5d48b]">
                             Rakan
                           </div>
-                        )}
-                        <p className="whitespace-pre-wrap">{m.content}</p>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="h-1.5 w-1.5 rounded-full bg-[#d5b16b] animate-bounce [animation-delay:-0.2s]" />
+                          <span className="h-1.5 w-1.5 rounded-full bg-[#d5b16b] animate-bounce [animation-delay:-0.1s]" />
+                          <span className="h-1.5 w-1.5 rounded-full bg-[#d5b16b] animate-bounce" />
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    </motion.div>
+                  )}
+                  <div ref={endRef} />
+                </div>
 
-                {isTyping && (
-                  <div className="flex justify-start">
-                    <div className="max-w-[85%] px-3 py-2 text-sm border bg-[#1a1a1a] text-zinc-100 border-[#2c2c2c]">
-                      <div className="text-[10px] uppercase tracking-[0.16em] text-[#f5d48b] mb-1">
-                        Rakan
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <span className="h-1.5 w-1.5 rounded-full bg-zinc-300 animate-bounce [animation-delay:-0.2s]" />
-                        <span className="h-1.5 w-1.5 rounded-full bg-zinc-300 animate-bounce [animation-delay:-0.1s]" />
-                        <span className="h-1.5 w-1.5 rounded-full bg-zinc-300 animate-bounce" />
-                      </div>
-                    </div>
+                <form onSubmit={handleSend} className="p-3 border-t border-[#232323] flex items-center gap-2 bg-[#0f0f0f]">
+                  <div className="flex-1 rounded-full border border-[#2e2e2e] bg-[#121212] px-3 py-2 flex items-center gap-2 focus-within:border-[#d5b16b] focus-within:ring-2 focus-within:ring-[#d5b16b]/20 transition-colors">
+                    <input
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          void handleSend();
+                        }
+                      }}
+                      placeholder="Ask about style, sizing, shipping..."
+                      className="flex-1 bg-transparent text-zinc-100 placeholder:text-zinc-500 text-sm outline-none"
+                    />
+                    <button
+                      type="submit"
+                      disabled={isTyping || !input.trim()}
+                      className="h-9 w-9 shrink-0 flex items-center justify-center bg-[#d5b16b] text-black disabled:opacity-40 transition-opacity rounded-full"
+                      aria-label="Send message"
+                    >
+                      <Send size={15} />
+                    </button>
                   </div>
-                )}
-                <div ref={endRef} />
-              </div>
-
-              <form onSubmit={handleSend} className="p-3 border-t border-[#232323] flex items-center gap-2">
-                <input
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      void handleSend();
-                    }
-                  }}
-                  placeholder="Ask about style, sizing, shipping..."
-                  className="flex-1 bg-[#171717] border border-[#2e2e2e] text-zinc-100 placeholder:text-zinc-500 px-3 py-2 text-sm outline-none focus:border-[#d5b16b]"
-                />
-                <button
-                  type="submit"
-                  disabled={isTyping || !input.trim()}
-                  className="h-10 w-10 shrink-0 flex items-center justify-center bg-[#d5b16b] text-black disabled:opacity-40 transition-opacity"
-                  aria-label="Send message"
-                >
-                  <Send size={16} />
-                </button>
-              </form>
-            </>
-          )}
-        </div>
+                </form>
+              </>
+            )}
+          </motion.div>
+        </AnimatePresence>
       )}
     </div>
   );
 }
+
+// Local styles (premium ring pulse)
+const CHATBOT_CSS = `
+  @keyframes ringPulseGold {
+    0% { transform: scale(1); opacity: 0.22; }
+    55% { transform: scale(1.6); opacity: 0.0; }
+    100% { transform: scale(1.6); opacity: 0.0; }
+  }
+
+  .ring-pulse-gold {
+    box-shadow: 0 0 0 0 rgba(213, 177, 107, 0.35);
+    border: 1px solid rgba(213, 177, 107, 0.45);
+    animation: ringPulseGold 1.8s ease-out infinite;
+  }
+`;

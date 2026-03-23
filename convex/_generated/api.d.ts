@@ -13,6 +13,7 @@ import type * as bookings from "../bookings.js";
 import type * as chatSessions from "../chatSessions.js";
 import type * as memberships from "../memberships.js";
 import type * as messages from "../messages.js";
+import type * as payments from "../payments.js";
 
 import type {
   ApiFromModules,
@@ -26,6 +27,7 @@ declare const fullApi: ApiFromModules<{
   chatSessions: typeof chatSessions;
   memberships: typeof memberships;
   messages: typeof messages;
+  payments: typeof payments;
 }>;
 
 /**

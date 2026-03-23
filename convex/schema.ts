@@ -13,12 +13,14 @@ export default defineSchema({
       v.literal("confirmed"),
       v.literal("cancelled")
     ),
+    paymentStatus: v.optional(v.string()),
   }),
   memberships: defineTable({
     name: v.string(),
     email: v.string(),
     tier: v.union(v.literal("monthly"), v.literal("annual")),
     active: v.boolean(),
+    paymentStatus: v.optional(v.string()),
   }),
   admins: defineTable({
     email: v.string(),
@@ -48,5 +50,19 @@ export default defineSchema({
     startedAt: v.number(),
     lastMessageAt: v.number(),
     messageCount: v.number(),
+  }),
+  payments: defineTable({
+    type: v.string(), // "membership" or "booking"
+    referenceId: v.string(), // bookingId or membershipId
+    stripeSessionId: v.string(),
+    stripePaymentIntentId: v.optional(v.string()),
+    amount: v.number(), // cents
+    currency: v.string(), // "usd" or "aed"
+    status: v.string(), // "pending" | "paid" | "failed" | "refunded"
+    customerEmail: v.string(),
+    customerName: v.string(),
+    planType: v.optional(v.string()), // "monthly" | "yearly"
+    createdAt: v.number(),
+    paidAt: v.optional(v.number()),
   }),
 });
