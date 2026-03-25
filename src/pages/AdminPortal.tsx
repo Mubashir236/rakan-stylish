@@ -2,11 +2,12 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { LogOut, Trash2, CheckCircle, Users, CalendarDays, Clock, XCircle, Hash, Mail, Briefcase, CalendarCheck, Crown, MessageSquare } from "lucide-react";
+import { LogOut, Trash2, CheckCircle, Users, CalendarDays, Clock, XCircle, Hash, Mail, Briefcase, CalendarCheck, Crown, MessageSquare, BadgeDollarSign } from "lucide-react";
 import HeroWebGLBackground from "@/components/HeroWebGLBackground";
 import { useIsMobile } from "@/hooks/use-mobile";
 import heroBgMain from "@/assets/heroBG-1.jpg";
 import AdminChats from "./AdminChats";
+import AdminPayments from "./AdminPayments";
 
 async function sha256(message: string): Promise<string> {
   const data = new TextEncoder().encode(message);
@@ -34,7 +35,7 @@ const AdminPortal = () => {
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState("");
   const [loggingIn, setLoggingIn] = useState(false);
-  const [tab, setTab] = useState<"bookings" | "memberships" | "chatLogs">("bookings");
+  const [tab, setTab] = useState<"bookings" | "memberships" | "chatLogs" | "payments">("bookings");
   const isMobile = useIsMobile();
 
   const login = useAction(api.admin.login);
@@ -183,11 +184,22 @@ const AdminPortal = () => {
             >
               <MessageSquare size={16} /> Chat Logs
             </button>
+            <button
+              onClick={() => setTab("payments")}
+              className={`inline-flex items-center gap-2 px-6 py-3 text-sm font-medium tracking-[0.15em] uppercase transition-colors ${
+                tab === "payments"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-white/80 backdrop-blur-sm text-muted-foreground hover:text-foreground border border-border"
+              }`}
+            >
+              <BadgeDollarSign size={16} /> Payments
+            </button>
           </motion.div>
 
           {tab === "bookings" && <BookingsTable />}
           {tab === "memberships" && <MembershipsTable />}
           {tab === "chatLogs" && <AdminChats />}
+          {tab === "payments" && <AdminPayments />}
         </div>
       </div>
     </div>

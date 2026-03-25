@@ -11,6 +11,7 @@ export const subscribe = mutation({
     return await ctx.db.insert("memberships", {
       ...args,
       active: true,
+      paymentStatus: "unpaid",
     });
   },
 });

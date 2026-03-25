@@ -11,6 +11,7 @@ import Booking from "./pages/Booking";
 import CollectionGrid from "./pages/CollectionGrid";
 import NotFound from "./pages/NotFound";
 import AdminPortal from "./pages/AdminPortal";
+import PaymentSuccess from "./pages/PaymentSuccess";
 
 const App = () => (
   <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
@@ -24,6 +25,7 @@ const App = () => (
           <Route path="/education" element={<Education />} />
           <Route path="/membership" element={<Membership />} />
           <Route path="/booking" element={<Booking />} />
+          <Route path="/payment-success" element={<PaymentSuccess />} />
           <Route path="/admin" element={<AdminPortal />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

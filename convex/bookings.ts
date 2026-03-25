@@ -13,6 +13,7 @@ export const createBooking = mutation({
     return await ctx.db.insert("bookings", {
       ...args,
       status: "pending",
+      paymentStatus: "unpaid",
     });
   },
 });
