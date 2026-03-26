@@ -84,6 +84,7 @@ const MembershipPage = () => {
         customerName: subName,
         customerEmail: subEmail,
         membershipId,
+        siteUrl: window.location.origin,
       });
       window.location.href = result.checkoutUrl;
       setModalTier(null);

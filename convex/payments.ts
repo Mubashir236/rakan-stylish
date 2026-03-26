@@ -108,6 +108,7 @@ export const createMembershipCheckout = action({
     customerName: v.string(),
     customerEmail: v.string(),
     membershipId: v.id("memberships"),
+    siteUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const PRICES = {
@@ -115,7 +116,7 @@ export const createMembershipCheckout = action({
       yearly: { amount: 99900, label: "Rakan Yearly Membership" },
     } as const;
 
-    const siteUrl = process.env.VITE_SITE_URL ?? "http://localhost:8080";
+    const siteUrl = args.siteUrl ?? process.env.SITE_URL ?? "http://localhost:8080";
     const price = PRICES[args.planType];
 
     const session = await stripeRequest("checkout/sessions", {
@@ -168,9 +169,10 @@ export const createBookingCheckout = action({
     bookingId: v.id("bookings"),
     serviceType: v.string(),
     amount: v.number(),
+    siteUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const siteUrl = process.env.VITE_SITE_URL ?? "http://localhost:8080";
+    const siteUrl = args.siteUrl ?? process.env.SITE_URL ?? "http://localhost:8080";
     const chargeAmount = args.amount > 0 ? args.amount : 15000;
 
     const session = await stripeRequest("checkout/sessions", {

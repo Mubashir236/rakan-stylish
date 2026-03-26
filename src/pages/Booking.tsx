@@ -71,6 +71,7 @@ const BookingPage = () => {
           bookingId: createdBookingId,
           serviceType: selectedService,
           amount,
+          siteUrl: window.location.origin,
         });
         window.location.href = result.checkoutUrl;
       } catch {
