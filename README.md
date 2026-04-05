@@ -1,73 +1,74 @@
-# Welcome to your Lovable project
+# RAKAN Stylish - Luxury Styling & Image Consulting
 
-## Project info
+A premium website for RAKAN — a luxury styling, education, and image consulting brand for those who demand excellence in every detail.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+**Live Site:** [rakan-stylish.vercel.app](https://rakan-stylish.vercel.app)
 
-## How can I edit this code?
+---
 
-There are several ways of editing your application.
+## Features
 
-**Use Lovable**
+- **Elegant Landing Page** — Premium design with smooth animations and luxury aesthetics
+- - **Service Showcase** — Detailed presentation of styling, education, and consulting services
+  - - **Chatbot Integration** — AI-powered chatbot for visitor engagement using Convex backend
+    - - **Stripe Payments** — Secure payment processing for bookings and services
+      - - **Responsive Design** — Pixel-perfect experience across all devices
+        - - **Fast Performance** — Optimized with Vite for lightning-fast load times
+         
+          - ---
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+          ## Tech Stack
 
-Changes made via Lovable will be committed automatically to this repo.
+          | Layer | Technology |
+          |-------|-----------|
+          | Frontend | React, TypeScript |
+          | UI Components | shadcn/ui |
+          | Styling | Tailwind CSS |
+          | Backend | Convex |
+          | Payments | Stripe |
+          | Build Tool | Vite |
+          | Deployment | Vercel |
 
-**Use your preferred IDE**
+          ---
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+          ## Getting Started
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+          ```bash
+          # Clone the repository
+          git clone https://github.com/Mubashir236/rakan-stylish.git
 
-Follow these steps:
+          # Navigate to the project
+          cd rakan-stylish
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+          # Install dependencies
+          npm install
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+          # Set up environment variables
+          cp .env.example .env
+          # Fill in your Convex and Stripe keys
 
-# Step 3: Install the necessary dependencies.
-npm i
+          # Start the development server
+          npm run dev
+          ```
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+          ---
 
-**Edit a file directly in GitHub**
+          ## Project Structure
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+          ```
+          rakan-stylish/
+          ├── convex/          # Convex backend functions & schema
+          ├── public/          # Static assets and favicon
+          ├── src/             # React application source
+          ├── .env.example     # Environment variable template
+          ├── components.json  # shadcn/ui configuration
+          ├── tailwind.config.js
+          ├── vite.config.ts
+          └── package.json
+          ```
 
-**Use GitHub Codespaces**
+          ---
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+          ## Author
 
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+          **Mubashir Khan** — [GitHub](https://github.com/Mubashir236)
